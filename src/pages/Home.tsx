@@ -1,5 +1,4 @@
-import React from "react";
-import html2pdf from "html2pdf.js";
+import React, { useState } from "react";
 import Container from "react-bootstrap/Container";
 import Navbar from "react-bootstrap/Navbar";
 import Row from "react-bootstrap/Row";
@@ -7,225 +6,231 @@ import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
 import Button from "react-bootstrap/Button";
+import { useDepartamentos } from '../context/DepartamentoContext';
+import { useMotivosSalida } from '../context/MotivosSalidaContext';
+import { useTiposSalida } from '../context/TiposSalidaContext';
+import ClienteAxios from '../config/axios'; // Asegúrate de que este es tu cliente Axios
 
 function Home() {
-    const exportToPDF = () => {
-        const element = document.getElementById("pdf-content");
-        if (element) { // Verifica que el elemento no sea null
-          const opt = {
-            margin: 0.5,
-            filename: 'pase_de_salida.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-          };
-          html2pdf().from(element).set(opt).save();
-        } else {
-          console.error("No se encontró el elemento con ID 'pdf-content'");
+    const { departamentos } = useDepartamentos();
+    const { motivosSalida } = useMotivosSalida();
+    const { tiposSalida } = useTiposSalida();
+
+    // Estado para los valores del formulario
+    const [responsable, setResponsable] = useState("");
+    const [idDepartamento, setIdDepartamento] = useState("");
+    const [cantidad, setCantidad] = useState("");
+    const [color, setColor] = useState("");
+    const [modelo, setModelo] = useState("");
+    const [marca, setMarca] = useState("");
+    const [serie, setSerie] = useState("");
+    const [observaciones, setObservaciones] = useState("");
+    const [idMotivoSalida, setIdMotivoSalida] = useState("");
+    const [idTipoSalida, setIdTipoSalida] = useState("");
+    const [fechaEstimadaReparacion, setFechaEstimadaReparacion] = useState("");
+    const [observacionesSalida, setObservacionesSalida] = useState("");
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData();
+        formData.append("action", "insert");     
+        formData.append("responsable_producto", responsable);
+        formData.append("id_departamento", idDepartamento);
+        formData.append("cantidad_producto", cantidad);
+        formData.append("color_producto", color);
+        formData.append("modelo_producto", modelo);
+        formData.append("marca_producto", marca);
+        formData.append("serie_producto", serie);
+        formData.append("observaciones_producto", observaciones);
+        formData.append("id_motivo_salida", idMotivoSalida);
+        formData.append("id_tipo_salida", idTipoSalida);
+        formData.append("fecha_estimada_reparacion_producto", fechaEstimadaReparacion);
+        formData.append("observaciones_salida_producto", observacionesSalida);
+
+        // Verifica los datos del FormData
+        console.log("Datos del FormData:");
+        formData.forEach((value, key) => {
+            console.log(key, value);
+        });
+
+        try {
+            const response = await ClienteAxios.post("/productos", formData, {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            console.log("Producto enviado:", response.data);
+            // Mostrar el modal u otra notificación aquí si es necesario
+        } catch (error) {
+            console.error("Error al enviar el producto:", error);
         }
-      };
+    };
 
-  return (
-    <>
-      <Navbar bg="light" expand="lg" className="bg-body-tertiary">
-        <Container>
-          <Navbar.Brand href="#home">Pase de Salida</Navbar.Brand>          
-        </Container>
-      </Navbar>
+    return (
+        <>
+            <Navbar bg="light" expand="lg" className="bg-body-tertiary">
+                <Container>
+                    <Navbar.Brand href="#home">Pase de Salida</Navbar.Brand>
+                </Container>
+            </Navbar>
 
-      <Container id="pdf-content" className="mt-3 px-4 my-5">
-        <Row>
-          <Col sm={6}>
-            <h2>REGISTRO DE SALIDA</h2>
-            <Container className="px-4 my-4">
-              <InputGroup>
-                <InputGroup.Text>No.Folio Bitácora de control</InputGroup.Text>
-                <Form.Control as="textarea" aria-label="With textarea" />
-              </InputGroup>
+            <Container className="mt-3 px-4 my-5">
+                {/* Formulario de registro */}
+                <Form onSubmit={handleSubmit}>
+                    {/* Campos de formulario */}
+                    <Form.Group controlId="formResponsable" className="mb-4">
+                        <Form.Label>Responsable</Form.Label>
+                        <Form.Control
+                            type="text"
+                            placeholder="Ingrese el responsable"
+                            value={responsable}
+                            onChange={(e) => setResponsable(e.target.value)}
+                            required
+                        />
+                    </Form.Group>
+
+                    <Form.Group controlId="formDepartamento" className="mb-4">
+                        <Form.Label>Departamento</Form.Label>
+                        <Form.Select
+                            value={idDepartamento}
+                            onChange={(e) => setIdDepartamento(e.target.value)}
+                            required
+                        >
+                            <option value="">Elija una opción</option>
+                            {departamentos.map(departamento => (
+                                <option key={departamento.id_departamento} value={departamento.id_departamento}>
+                                    {departamento.nombre_departamento}
+                                </option>
+                            ))}
+                        </Form.Select>
+                    </Form.Group>
+
+                    <Form.Group controlId="formCantidad" className="mb-4">
+                        <Form.Label>Cantidad</Form.Label>
+                        <Form.Control
+                            type="number"
+                            placeholder="Ingrese la cantidad"
+                            value={cantidad}
+                            onChange={(e) => setCantidad(e.target.value)}
+                            required
+                        />
+                    </Form.Group>
+
+                    <Form.Group controlId="formColor" className="mb-4">
+                        <Form.Label>Color</Form.Label>
+                        <Form.Control
+                            type="text"
+                            placeholder="Ingrese el color"
+                            value={color}
+                            onChange={(e) => setColor(e.target.value)}
+                            required
+                        />
+                    </Form.Group>
+
+                    <Form.Group controlId="formModelo" className="mb-4">
+                        <Form.Label>Modelo</Form.Label>
+                        <Form.Control
+                            type="text"
+                            placeholder="Ingrese el modelo"
+                            value={modelo}
+                            onChange={(e) => setModelo(e.target.value)}
+                            required
+                        />
+                    </Form.Group>
+
+                    <Form.Group controlId="formMarca" className="mb-4">
+                        <Form.Label>Marca</Form.Label>
+                        <Form.Control
+                            type="text"
+                            placeholder="Ingrese la marca"
+                            value={marca}
+                            onChange={(e) => setMarca(e.target.value)}
+                            required
+                        />
+                    </Form.Group>
+
+                    <Form.Group controlId="formSerie" className="mb-4">
+                        <Form.Label>Serie</Form.Label>
+                        <Form.Control
+                            type="text"
+                            placeholder="Ingrese la serie"
+                            value={serie}
+                            onChange={(e) => setSerie(e.target.value)}
+                            required
+                        />
+                    </Form.Group>
+
+                    <Form.Group controlId="formObservaciones" className="mb-4">
+                        <Form.Label>Observaciones</Form.Label>
+                        <Form.Control
+                            as="textarea"
+                            rows={3}
+                            placeholder="Ingrese observaciones"
+                            value={observaciones}
+                            onChange={(e) => setObservaciones(e.target.value)}
+                        />
+                    </Form.Group>
+
+                    <Form.Group controlId="formMotivoSalida" className="mb-4">
+                        <Form.Label>Motivo de Salida</Form.Label>
+                        <Form.Select
+                            value={idMotivoSalida}
+                            onChange={(e) => setIdMotivoSalida(e.target.value)}
+                            required
+                        >
+                            <option value="">Selecciona una opción</option>
+                            {motivosSalida.map(motivo => (
+                                <option key={motivo.id_motivo_salida} value={motivo.id_motivo_salida}>
+                                    {motivo.motivo_salida}
+                                </option>
+                            ))}
+                        </Form.Select>
+                    </Form.Group>
+
+                    <Form.Group controlId="formTipoSalida" className="mb-4">
+                        <Form.Label>Tipo de Salida</Form.Label>
+                        <Form.Select
+                            value={idTipoSalida}
+                            onChange={(e) => setIdTipoSalida(e.target.value)}
+                            required
+                        >
+                            <option value="">Elija una opción</option>
+                            {tiposSalida.map(tipo => (
+                                <option key={tipo.id_tipo_salida} value={tipo.id_tipo_salida}>
+                                    {tipo.tipo_salida}
+                                </option>
+                            ))}
+                        </Form.Select>
+                    </Form.Group>
+
+                    <Form.Group controlId="formFechaEstimadaReparacion" className="mb-4">
+                        <Form.Label>Fecha Estimada de Reparación</Form.Label>
+                        <Form.Control
+                            type="date"
+                            value={fechaEstimadaReparacion}
+                            onChange={(e) => setFechaEstimadaReparacion(e.target.value)}
+                        />
+                    </Form.Group>
+
+                    <Form.Group controlId="formObservacionesSalida" className="mb-4">
+                        <Form.Label>Observaciones de Salida</Form.Label>
+                        <Form.Control
+                            as="textarea"
+                            rows={3}
+                            placeholder="Ingrese observaciones de salida"
+                            value={observacionesSalida}
+                            onChange={(e) => setObservacionesSalida(e.target.value)}
+                        />
+                    </Form.Group>
+
+                    <Button variant="primary" type="submit">
+                        Enviar
+                    </Button>
+                </Form>
             </Container>
-            <Container className="px-4 my-4">
-              <InputGroup>
-                <InputGroup.Text>
-                  Verificación de Garita de Salida
-                </InputGroup.Text>
-                <Form.Control as="textarea" aria-label="With textarea" />
-              </InputGroup>
-            </Container>
-            <Container className="px-4 my-4">
-              <InputGroup>
-                <InputGroup.Text>Fecha de salida por Garita </InputGroup.Text>
-                <Form.Control as="textarea" aria-label="With textarea" />
-              </InputGroup>
-            </Container>
-          </Col>
-          <Col sm={6}>
-            <h2>REGISTRO DE ENTRADA</h2>
-
-            <Container className="px-4 my-4">
-              <InputGroup>
-                <InputGroup.Text>
-                  Verificación de entrada de Garita
-                </InputGroup.Text>
-                <Form.Control as="textarea" aria-label="With textarea" />
-              </InputGroup>
-            </Container>
-            <Container className="px-4 my-4">
-              <InputGroup>
-                <InputGroup.Text>Baja en Bitácora de Control</InputGroup.Text>
-                <Form.Control as="textarea" aria-label="With textarea" />
-              </InputGroup>
-            </Container>
-            <Container className="px-4 my-4">
-              <InputGroup>
-                <InputGroup.Text>Fecha de entrada por Garita </InputGroup.Text>
-                <Form.Control as="textarea" aria-label="With textarea" />
-              </InputGroup>
-            </Container>
-          </Col>
-        </Row>
-      </Container>
-
-      <Container className="px-4 my-5">
-        <InputGroup className="mb-4">
-          <InputGroup.Text id="basic-addon3">
-            Responsable que envía por parte del hotel
-          </InputGroup.Text>
-          <Form.Control id="basic-url" aria-describedby="basic-addon3" />
-        </InputGroup>
-
-        <InputGroup className="mb-4">
-          <InputGroup.Text id="basic-addon3">
-            Nombre o Razón Social
-          </InputGroup.Text>
-          <Form.Control id="basic-url" aria-describedby="basic-addon3" />
-        </InputGroup>
-
-        <InputGroup className="mb-4">
-          <InputGroup.Text id="basic-addon3">
-            Dirección
-          </InputGroup.Text>
-          <Form.Control id="basic-url" aria-describedby="basic-addon3" />
-        </InputGroup>
-        
-        <Form.Label htmlFor="inputPassword5">Departamento</Form.Label>
-        <Form.Select>
-          <option>Elija una opción</option>
-          <option>Open this select menu</option>
-          <option value="1">One</option>
-          <option value="2">Two</option>
-          <option value="3">Three</option>
-        </Form.Select>
-      </Container>
-
-      {/* Formulario en dos columnas */}
-      <Container className="px-4 my-5">
-        <Row>
-          <Col sm={6} className="mb-4">
-            <Form.Group controlId="formCantidad">
-              <Form.Label>Cantidad</Form.Label>
-              <Form.Control type="number" placeholder="Ingrese la cantidad" />
-            </Form.Group>
-          </Col>
-          <Col sm={6} className="mb-4">
-            <Form.Group controlId="formMarca">
-              <Form.Label>Marca</Form.Label>
-              <Form.Control type="text" placeholder="Ingrese la marca" />
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row>
-          <Col sm={6} className="mb-4">
-            <Form.Group controlId="formColor">
-              <Form.Label>Color</Form.Label>
-              <Form.Control type="text" placeholder="Ingrese el color" />
-            </Form.Group>
-          </Col>
-          <Col sm={6} className="mb-4">
-            <Form.Group controlId="formModelo">
-              <Form.Label>Modelo</Form.Label>
-              <Form.Control type="text" placeholder="Ingrese el modelo" />
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row>
-          <Col sm={6} className="mb-4">
-            <Form.Group controlId="formSerie">
-              <Form.Label>Serie</Form.Label>
-              <Form.Control type="text" placeholder="Ingrese la serie" />
-            </Form.Group>
-          </Col>
-          <Col sm={6} className="mb-4">
-            <Form.Group controlId="formObservaciones">
-              <Form.Label>Observaciones</Form.Label>
-              <Form.Control as="textarea" rows={3} placeholder="Ingrese observaciones" />
-            </Form.Group>
-          </Col>
-        </Row>
-      </Container>
-
-      {/* Nuevos campos */}
-      <Container className="px-4 my-5">
-        <Form.Group controlId="formMotivoSalida" className="mb-4">
-          <Form.Label>MOTIVO DE SALIDA</Form.Label>
-          <Form.Select>
-            <option>Selecciona una opción</option>
-            <option>Opción 1</option>
-            <option>Opción 2</option>
-            <option>Opción 3</option>
-          </Form.Select>
-        </Form.Group>
-
-        <Form.Group controlId="formFechaDevolucion" className="mb-4">
-          <Form.Label>
-            SI ES TEMPORAL INDIQUE LA FECHA PROBABLE DE DEVOLUCIÓN
-          </Form.Label>
-          <Form.Control type="date" />
-        </Form.Group>
-      </Container>
-
-      {/* Espacio para firmas */}
-      <Container className="px-4 my-5">
-        <Row>
-          <Col sm={6} className="mb-4 my-5">
-            <Form.Group controlId="formVoBoLiderDepartamento">
-              <div style={{ borderBottom: '1px solid black', marginBottom: '10px' }}></div>
-              <Form.Label>Vo.Bo Líder del Departamento</Form.Label>
-            </Form.Group>
-          </Col>
-          <Col sm={6} className="mb-4 my-5">
-            <Form.Group controlId="formAutorizaLiderDivisional">
-              <div style={{ borderBottom: '1px solid black', marginBottom: '10px' }}></div>
-              <Form.Label>Autoriza Líder Divisional</Form.Label>
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row>
-          <Col sm={6} className="mb-4 my-5">
-            <Form.Group controlId="formAutorizoGerencia">
-              <div style={{ borderBottom: '1px solid black', marginBottom: '10px' }}></div>
-              <Form.Label>Autorizó Gerencia o Contraloría</Form.Label>
-            </Form.Group>
-          </Col>
-          <Col sm={6} className="mb-4 my-5">
-            <Form.Group controlId="formNombreFirmaRecibe">
-              <div style={{ borderBottom: '1px solid black', marginBottom: '10px' }}></div>
-              <Form.Label>Nombre y firma de quien recibe</Form.Label>
-            </Form.Group>
-          </Col>
-        </Row>
-      </Container>
-
-      {/* Mensaje importante y botón */}
-      <Container className="px-4 my-5">
-        <div className="alert alert-info" role="alert">
-          IMPORTANTE: La persona o contratista que sale con artículos deberá de conservar la copia y mostrarla al regresar los artículos, para que sean dados de baja completamente.
-        </div>
-        <Button variant="primary" className="my-3" onClick={exportToPDF}>
-          Exportar a PDF
-        </Button>
-      </Container>
-    </>
-  );
+        </>
+    );
 }
 
 export default Home;
