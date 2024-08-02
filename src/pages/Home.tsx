@@ -4,8 +4,9 @@ import Navbar from "react-bootstrap/Navbar";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
-import InputGroup from "react-bootstrap/InputGroup";
 import Button from "react-bootstrap/Button";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 import { useDepartamentos } from '../context/DepartamentoContext';
 import { useMotivosSalida } from '../context/MotivosSalidaContext';
 import { useTiposSalida } from '../context/TiposSalidaContext';
@@ -33,6 +34,33 @@ function Home() {
     const handleSubmit = async (event) => {
         event.preventDefault();
 
+        // Oculta el botón de enviar
+        const submitButton = document.getElementById('submit-button');
+        if (submitButton) {
+            submitButton.style.display = 'none';
+        }
+
+        // Crea un nuevo documento PDF
+        const doc = new jsPDF();
+        
+        // Usa html2canvas para convertir el formulario a una imagen
+        const formElement = document.getElementById('form-content');
+        if (formElement) {
+            const canvas = await html2canvas(formElement);
+            const imgData = canvas.toDataURL('image/png');
+            
+            // Añade la imagen al PDF
+            doc.addImage(imgData, 'PNG', 10, 10, 190, 0 );
+            
+            // Guarda el PDF
+            doc.save('formulario.pdf');
+        }
+
+        // Muestra el botón de enviar nuevamente
+        if (submitButton) {
+            submitButton.style.display = 'block';
+        }
+
         const formData = new FormData();
         formData.append("action", "insert");     
         formData.append("responsable_producto", responsable);
@@ -48,12 +76,6 @@ function Home() {
         formData.append("fecha_estimada_reparacion_producto", fechaEstimadaReparacion);
         formData.append("observaciones_salida_producto", observacionesSalida);
 
-        // Verifica los datos del FormData
-        console.log("Datos del FormData:");
-        formData.forEach((value, key) => {
-            console.log(key, value);
-        });
-
         try {
             const response = await ClienteAxios.post("/productos", formData, {
                 headers: {
@@ -61,7 +83,6 @@ function Home() {
                 },
             });
             console.log("Producto enviado:", response.data);
-            // Mostrar el modal u otra notificación aquí si es necesario
         } catch (error) {
             console.error("Error al enviar el producto:", error);
         }
@@ -69,15 +90,16 @@ function Home() {
 
     return (
         <>
+        
             <Navbar bg="light" expand="lg" className="bg-body-tertiary">
                 <Container>
                     <Navbar.Brand href="#home">Pase de Salida</Navbar.Brand>
                 </Container>
             </Navbar>
 
+            <div style={{padding: '0px 230px 230px'}}>
             <Container className="mt-3 px-4 my-5">
-                {/* Formulario de registro */}
-                <Form onSubmit={handleSubmit}>
+                <Form onSubmit={handleSubmit} id="form-content">
                     {/* Campos de formulario */}
                     <Form.Group controlId="formResponsable" className="mb-4">
                         <Form.Label>Responsable</Form.Label>
@@ -224,11 +246,50 @@ function Home() {
                         />
                     </Form.Group>
 
-                    <Button variant="primary" type="submit">
+                    {/* Espacio para firmas */}
+                    <Container className="px-4 my-5">
+                        <Row>
+                            <Col sm={6} className="mb-4 my-5">
+                                <Form.Group controlId="formVoBoLiderDepartamento">
+                                    <div style={{ borderBottom: '1px solid black', marginBottom: '10px' }}></div>
+                                    <Form.Label>Vo.Bo Líder del Departamento</Form.Label>
+                                </Form.Group>
+                            </Col>
+                            <Col sm={6} className="mb-4 my-5">
+                                <Form.Group controlId="formAutorizaLiderDivisional">
+                                    <div style={{ borderBottom: '1px solid black', marginBottom: '10px' }}></div>
+                                    <Form.Label>Autoriza Líder Divisional</Form.Label>
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col sm={6} className="mb-4 my-5">
+                                <Form.Group controlId="formAutorizoGerencia">
+                                    <div style={{ borderBottom: '1px solid black', marginBottom: '10px' }}></div>
+                                    <Form.Label>Autorizó Gerencia o Contraloría</Form.Label>
+                                </Form.Group>
+                            </Col>
+                            <Col sm={6} className="mb-4 my-5">
+                                <Form.Group controlId="formNombreFirmaRecibe">
+                                    <div style={{ borderBottom: '1px solid black', marginBottom: '10px' }}></div>
+                                    <Form.Label>Nombre y firma de quien recibe</Form.Label>
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                    </Container>
+
+
+                    <Container className="px-4 my-5">
+        <div className="alert alert-info" role="alert">
+          IMPORTANTE: La persona o contratista que sale con artículos deberá de conservar la copia y mostrarla al regresar los artículos, para que sean dados de baja completamente.
+        </div>
+                    <Button variant="primary" type="submit" id="submit-button">
                         Enviar
                     </Button>
+                    </Container>
                 </Form>
             </Container>
+            </div>
         </>
     );
 }
